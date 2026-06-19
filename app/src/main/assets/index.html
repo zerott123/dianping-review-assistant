@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>评价助手</title>
+<style>
+  :root {
+    --bg: #FFFBF7;
+    --surface: #FFFFFF;
+    --text: #1C1B1F;
+    --text-secondary: #6B6B6B;
+    --border: #E0E0E0;
+    --primary: #E85D04;
+    --primary-hover: #D45500;
+    --primary-light: #FFF0E5;
+    --chip-bg: #F5F0EB;
+    --chip-selected: #FFE8D6;
+    --chip-border: #E85D04;
+    --error-bg: #FFEBEE;
+    --error-text: #C62828;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1C1B1F;
+      --surface: #2C2B30;
+      --text: #E6E1E5;
+      --text-secondary: #9E9E9E;
+      --border: #3E3E3E;
+      --primary: #FFB74D;
+      --primary-hover: #FFA726;
+      --primary-light: #3E2A00;
+      --chip-bg: #2D2B29;
+      --chip-selected: #3E2A00;
+      --chip-border: #FFB74D;
+      --error-bg: #3E1A1A;
+      --error-text: #FF8A80;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  header {
+    padding: 12px 0 8px;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .section { margin-bottom: 16px; }
+
+  .label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  textarea#input {
+    width: 100%;
+    min-height: 110px;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  textarea#input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  textarea#input::placeholder {
+    color: #BBB;
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--chip-bg);
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .chip.selected {
+    background: var(--chip-selected);
+    border-color: var(--chip-border);
+    font-weight: 500;
+  }
+
+  .custom-input {
+    width: 72px;
+    padding: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    text-align: center;
+  }
+  .custom-input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .btn {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+    background: var(--primary);
+  }
+  .btn:hover { background: var(--primary-hover); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn.loading {
+    background: var(--primary-hover);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  #result-area { display: none; }
+
+  #result-area.visible { display: block; }
+
+  textarea#result {
+    width: 100%;
+    min-height: 160px;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    resize: vertical;
+    line-height: 1.7;
+  }
+  textarea#result:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  textarea#result::placeholder {
+    color: #BBB;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .btn-secondary {
+    flex: 1;
+    height: 44px;
+    border: 1.5px solid var(--primary);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--primary);
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--primary-light); }
+  .btn-secondary:active { transform: scale(0.98); }
+  .btn-primary {
+    flex: 1;
+    height: 44px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    background: var(--primary);
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  #error-box {
+    display: none;
+    padding: 14px;
+    background: var(--error-bg);
+    color: var(--error-text);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    margin-top: 12px;
+  }
+  #error-box.visible { display: block; }
+  #error-msg { margin-bottom: 8px; }
+  #retry-btn {
+    background: transparent;
+    border: 1px solid var(--error-text);
+    color: var(--error-text);
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>评价助手</h1>
+  </header>
+
+  <div class="section">
+    <div class="label">吃了什么，感觉怎么样</div>
+    <textarea id="input" placeholder="比如：牛肉饭，还凑活。可以加上店名"></textarea>
+  </div>
+
+  <div class="section">
+    <div class="label">风格</div>
+    <div class="chips" id="style-chips">
+      <span class="chip" data-value="随性">随性</span>
+      <span class="chip selected" data-value="客观">客观</span>
+      <span class="chip" data-value="吃货">吃货</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="label">字数</div>
+    <div class="chips" id="word-chips">
+      <span class="chip" data-value="50">50字</span>
+      <span class="chip selected" data-value="110">110字</span>
+      <span class="chip" data-value="自定义">自定义</span>
+    </div>
+    <div style="margin-top:8px; display:none;" id="custom-word-wrap">
+      <input class="custom-input" type="number" id="custom-word" placeholder="字数" min="1" max="999">
+      <span style="font-size:13px;color:var(--text-secondary);margin-left:6px;">字</span>
+    </div>
+  </div>
+
+  <button class="btn" id="generate-btn" onclick="onGenerate()">生成评价</button>
+
+  <div class="divider"></div>
+
+  <div id="result-area">
+    <textarea id="result" placeholder="评价内容将显示在这里"></textarea>
+    <div id="error-box">
+      <div id="error-msg"></div>
+      <button id="retry-btn" onclick="onGenerate()">重试</button>
+    </div>
+    <div class="action-row">
+      <button class="btn-secondary" id="regen-btn" onclick="onGenerate()">重新生成</button>
+      <button class="btn-primary" id="copy-btn" onclick="onCopy()">一键复制</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  var style = '客观';
+  var wordPreset = '110';
+  var customWord = '';
+  var isLoading = false;
+  var hasResult = false;
+
+  // Style chips
+  document.querySelectorAll('#style-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('#style-chips .chip').forEach(function(c) { c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      style = chip.dataset.value;
+    });
+  });
+
+  // Word count chips
+  document.querySelectorAll('#word-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('#word-chips .chip').forEach(function(c) { c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      wordPreset = chip.dataset.value;
+      var wrap = document.getElementById('custom-word-wrap');
+      wrap.style.display = wordPreset === '自定义' ? 'block' : 'none';
+      if (wordPreset !== '自定义') { customWord = ''; }
+      updateGenerateBtn();
+    });
+  });
+
+  document.getElementById('custom-word').addEventListener('input', function() {
+    customWord = this.value;
+    updateGenerateBtn();
+  });
+
+  document.getElementById('input').addEventListener('input', updateGenerateBtn);
+
+  function getWordCount() {
+    return wordPreset === '自定义' ? customWord : wordPreset;
+  }
+
+  function updateGenerateBtn() {
+    var input = document.getElementById('input').value.trim();
+    var btn = document.getElementById('generate-btn');
+    var ok = input.length > 0 && !isLoading;
+    if (wordPreset === '自定义' && !customWord) { ok = false; }
+    btn.disabled = !ok;
+  }
+
+  function onGenerate() {
+    var input = document.getElementById('input').value.trim();
+    if (!input || isLoading) return;
+
+    isLoading = true;
+    hasResult = false;
+    var btn = document.getElementById('generate-btn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="spinner"></span>生成中...';
+    btn.disabled = true;
+
+    var resultArea = document.getElementById('result-area');
+    resultArea.classList.add('visible');
+    document.getElementById('error-box').classList.remove('visible');
+
+    var resultTextarea = document.getElementById('result');
+    resultTextarea.value = '';
+    resultTextarea.placeholder = '正在生成...';
+
+    document.getElementById('regen-btn').disabled = true;
+    document.getElementById('copy-btn').disabled = true;
+
+    var wc = getWordCount();
+    if (typeof Android !== 'undefined') {
+      Android.generate(input, style, wc);
+    } else {
+      // Fallback for browser testing
+      setTimeout(function() {
+        window.onResult("[测试] 这是一条生成的评价内容。\n\n在App内运行时，这里会显示DeepSeek生成的真实评价。");
+      }, 1000);
+    }
+  }
+
+  window.onResult = function(text) {
+    isLoading = false;
+    hasResult = true;
+    var btn = document.getElementById('generate-btn');
+    btn.classList.remove('loading');
+    btn.innerHTML = '生成评价';
+    updateGenerateBtn();
+
+    document.getElementById('result').value = text;
+    document.getElementById('result').placeholder = '';
+    document.getElementById('regen-btn').disabled = false;
+    document.getElementById('copy-btn').disabled = false;
+  };
+
+  window.onError = function(msg) {
+    isLoading = false;
+    hasResult = false;
+    var btn = document.getElementById('generate-btn');
+    btn.classList.remove('loading');
+    btn.innerHTML = '生成评价';
+    updateGenerateBtn();
+
+    document.getElementById('result').placeholder = '评价内容将显示在这里';
+    document.getElementById('error-msg').textContent = msg;
+    document.getElementById('error-box').classList.add('visible');
+    document.getElementById('regen-btn').disabled = true;
+    document.getElementById('copy-btn').disabled = true;
+  };
+
+  function onCopy() {
+    var text = document.getElementById('result').value.trim();
+    if (!text) return;
+
+    if (typeof Android !== 'undefined') {
+      Android.copy(text);
+    } else {
+      // Fallback for browser testing
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      }
+    }
+    showToast('已复制');
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 1500);
+  }
+</script>
+</body>
+</html>
