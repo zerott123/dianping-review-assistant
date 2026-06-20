@@ -41,16 +41,19 @@ class DeepSeekApi(private val apiKey: String) {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     suspend fun generateReview(systemPrompt: String, userPrompt: String): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = ChatRequest(
+                    model = "deepseek-chat",
                     messages = listOf(
                         ChatMessage("system", systemPrompt),
                         ChatMessage("user", userPrompt)
-                    )
+                    ),
+                    temperature = 0.8,
+                    max_tokens = 600
                 )
 
                 val body = json.encodeToString(request)
@@ -60,13 +63,15 @@ class DeepSeekApi(private val apiKey: String) {
                     .url("https://api.deepseek.com/chat/completions")
                     .header("Authorization", "Bearer $apiKey")
                     .header("Content-Type", "application/json")
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android) DeepSeekClient/1.0")
                     .post(body)
                     .build()
 
                 val response = client.newCall(httpRequest).execute()
 
                 if (!response.isSuccessful) {
-                    Result.failure(Exception("API 请求失败: ${response.code} ${response.message}"))
+                    val errorBody = response.body?.string() ?: ""
+                    Result.failure(Exception("请求失败 HTTP ${response.code}: ${errorBody.take(200)}"))
                 } else {
                     val responseBody = response.body?.string() ?: ""
                     val chatResponse = json.decodeFromString<ChatResponse>(responseBody)
@@ -75,7 +80,7 @@ class DeepSeekApi(private val apiKey: String) {
                     Result.success(content.trim())
                 }
             } catch (e: Exception) {
-                Result.failure(e)
+                Result.failure(Exception("网络异常: ${e.javaClass.simpleName} - ${e.message}"))
             }
         }
     }
