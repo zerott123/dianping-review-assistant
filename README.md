@@ -4,7 +4,7 @@ Android WebView 大众点评评价写作工具。输入店名/菜名，AI 生成
 
 ## 截图
 
-> TODO: 添加 App 截图
+![评一下](./screenshot.png)
 
 ## 功能
 
